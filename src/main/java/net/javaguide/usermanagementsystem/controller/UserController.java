@@ -1,10 +1,8 @@
 package net.javaguide.usermanagementsystem.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +24,11 @@ public class UserController {
 	@Autowired
 	private UserRepository userRepository;
 	
-	// Get all users
+	@PostMapping("/users")
+	public UserModel createUser(@RequestBody UserModel user) {
+		return this.userRepository.save(user);
+	}
+	
 	@GetMapping("/users")
 	public List<UserModel> getAllUsers(){
 		return this.userRepository.findAll();
@@ -36,31 +38,21 @@ public class UserController {
 	public ResponseEntity<UserModel> getUserById(@PathVariable(value = "id") long id)
 	throws ResourceNotFoundException{
 		UserModel userModel = userRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found for this id:: " + id));
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 		return ResponseEntity.ok().body(userModel);
 	}
 	
-	@PostMapping("/user")
-	public UserModel createUser(@RequestBody UserModel user) {
-		return this.userRepository.save(user);
-	}
-	
 	@PutMapping("/users/{id}")
-	public ResponseEntity<UserModel> updateUser(@PathVariable("id") long id, @RequestBody UserModel user) {
-		Optional<UserModel> userData = userRepository.findById(id);
+	public ResponseEntity<UserModel> updateUser(@PathVariable("id") long id, @RequestBody UserModel user) throws ResourceNotFoundException {
+		UserModel _user = userRepository.findById(id)
 
-		if (userData.isPresent()) {
-			UserModel _user = userData.get();
+		.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 			_user.setFirstName(user.getFirstName());
 			_user.setLastName(user.getLastName());
 			_user.setEmail(user.getEmail());
 			_user.setPhoneNo(user.getPhoneNo());
-			return new ResponseEntity<>(userRepository.save(_user), HttpStatus.OK);
-		} else {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
+			return ResponseEntity.ok(this.userRepository.save(user));
 	}
-	
 	@DeleteMapping("/user/{id}")
 	  void deleteEmployee(@PathVariable Long id) {
 	    userRepository.deleteById(id);
